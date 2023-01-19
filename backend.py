@@ -3,6 +3,7 @@ import os
 import requests as req
 import flask
 import datetime
+import asyncio
 
 """
 
@@ -26,6 +27,8 @@ JSON_ADDR = "http://fortress.us.to/users"
 
 # The user's IP address
 USER_IP = req.get('https://api.ipify.org').content.decode('utf8')
+
+USERNAME = 'none'
 
 
 def get_user_list():
@@ -163,7 +166,65 @@ def get_msg(user):
             json_file.close()
     return messages
 
+async def upload(file):
+    try:
+        title = 'My file'
+
+        form = {'title': title}
+        files = {'file': file}
+
+        resp = req.post('http://localhost:3000/upload', data=form, files=files)
+
+        if resp.status_code == 200:
+            return 'Upload complete'
+    except Exception as err:
+        return f'Error: {err}'
+
+def update_ip():
+    """
+    Updates the user's IP address on the server's JSON file.
+    """
+    # get the users ip
+    user_ip = req.get('https://api.ipify.org').content.decode('utf8')
+    # get the list of users
+    user_list = get_user_list()
+    # update the user's ip
+    user_list.update({USERNAME: user_ip})
+    # save the list of users
+    with open("users.json", "r+") as json_file:
+        json.dump(user_list, json_file)
+        # post the list of users to the server
+        print(asyncio.run(upload(json_file)))  
+        json_file.close()
+
+
 if __name__ == "__main__":
 
-    print("import only file")
+    print("Starting in console mode...")
+    print("Type 'help' for a list of commands.")
+
+    # Start the server
+    asyncio.run(receive_msg())
+
+    # Start the console
+    while True:
+        cmd = input("Fortress > ").lower()
+        if cmd == "help":
+            print("Commands:")
+            print("    help: Shows this help message.")
+            print("    list: Lists all users.")
+            print("    send: Sends a message to a user.")
+            print("    get: Gets the messages from a user.")
+            print("    exit: Exits the program.")
+        elif cmd == "list":
+            print(get_user_list())
+        elif cmd == "send":
+            user = input("User: ")
+            message = input("Message: ")
+            send_msg(user, message)
+        elif cmd == "get":
+            user = input("User: ")
+            print(get_msg(user))
+        elif cmd == "exit":
+            break
     

@@ -2,10 +2,11 @@ import backend
 from tkinter import *
 import backend
 import threading
+import asyncio
 
 # start message receiving server
 def start_server():
-    backend.receive_msg()
+    asyncio.run(backend.receive_msg())
 
 # send message to user
 def send_message(recipient, message):
@@ -58,7 +59,24 @@ def connect():
     send_button = Button(window, text="Send", command=lambda: send_message(currentUser, message_entry.get()))
     send_button.grid(row=2, column=2)
 
+    # update ip on server
+    backend.update_ip()
 
+
+# create username field
+username_label = Label(window, text="Username: ")
+username_label.grid(row=3, column=0)
+username_entry = Entry(window)
+username_entry.grid(row=3, column=1)
+def set_username():
+    backend.USERNAME = username_entry.get()
+    username_label.config(text="Username: " + backend.USERNAME)
+    username_entry.delete(0, END)
+    backend.update_ip()
+
+# create username button
+username_button = Button(window, text="Set Name", command=lambda: set_username())
+username_button.grid(row=3, column=2)
 
 
 # create connect button
